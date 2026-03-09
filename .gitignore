@@ -1,0 +1,23 @@
+# env files
+.env
+backend/.env
+frontend/.env
+
+# Go
+backend/bin/
+backend/build/
+
+# Flutter / Node
+frontend/node_modules/
+frontend/build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
