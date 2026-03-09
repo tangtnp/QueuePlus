@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/tangtnp/queueplus/backend/internal/routes"
 )
 
 func main() {
@@ -18,17 +19,10 @@ func main() {
 
 	r := gin.Default()
 
-	api := r.Group("/api/v1")
-	{
-		api.GET("/health", func(c *gin.Context) {
-			c.JSON(200, gin.H{
-				"status":  "ok",
-				"message": "Queue+ backend is running",
-			})
-		})
-	}
+	routes.SetupRoutes(r)
 
 	log.Printf("server running at http://localhost:%s", port)
+
 	if err := r.Run(":" + port); err != nil {
 		log.Fatal(err)
 	}
