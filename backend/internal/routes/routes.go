@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/tangtnp/queueplus/backend/internal/handlers"
+	"github.com/tangtnp/queueplus/backend/internal/middleware"
 )
 
 func SetupRoutes(r *gin.Engine) {
@@ -12,23 +13,37 @@ func SetupRoutes(r *gin.Engine) {
 
 		api.POST("/auth/register", handlers.Register)
 		api.POST("/auth/login", handlers.Login)
-		api.POST("/auth/logout", handlers.Logout)
+		api.POST("/auth/logout", middleware.AuthMiddleware(), handlers.Logout)
 
-		api.POST("/branches", handlers.CreateBranch)
+		// public or customer-accessible
 		api.GET("/branches", handlers.GetBranches)
 		api.GET("/branches/:id", handlers.GetBranchByID)
-		api.PUT("/branches/:id", handlers.UpdateBranch)
-		api.DELETE("/branches/:id", handlers.DeleteBranch)
 
-		api.POST("/services", handlers.CreateService)
 		api.GET("/services", handlers.GetServices)
 		api.GET("/services/:id", handlers.GetServiceByID)
-		api.PUT("/services/:id", handlers.UpdateService)
-		api.DELETE("/services/:id", handlers.DeleteService)
 
 		api.POST("/queues", handlers.CreateQueue)
 		api.GET("/queues", handlers.GetQueues)
 		api.GET("/queues/:id", handlers.GetQueueByID)
-		api.PATCH("/queues/:id/status", handlers.UpdateQueueStatus)
+
+		// admin only
+		admin := api.Group("/")
+		admin.Use(middleware.AuthMiddleware(), middleware.RequireRoles("admin"))
+		{
+			admin.POST("/branches", handlers.CreateBranch)
+			admin.PUT("/branches/:id", handlers.UpdateBranch)
+			admin.DELETE("/branches/:id", handlers.DeleteBranch)
+
+			admin.POST("/services", handlers.CreateService)
+			admin.PUT("/services/:id", handlers.UpdateService)
+			admin.DELETE("/services/:id", handlers.DeleteService)
+		}
+
+		// staff and admin
+		staffOrAdmin := api.Group("/")
+		staffOrAdmin.Use(middleware.AuthMiddleware(), middleware.RequireRoles("staff", "admin"))
+		{
+			staffOrAdmin.PATCH("/queues/:id/status", handlers.UpdateQueueStatus)
+		}
 	}
 }
