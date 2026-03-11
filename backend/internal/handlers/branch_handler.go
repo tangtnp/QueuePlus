@@ -9,6 +9,7 @@ import (
 	"github.com/tangtnp/queueplus/backend/config"
 	"github.com/tangtnp/queueplus/backend/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func CreateBranch(c *gin.Context) {
@@ -65,5 +66,123 @@ func GetBranches(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": branches,
+	})
+}
+
+func GetBranchByID(c *gin.Context) {
+	idParam := c.Param("id")
+
+	objectID, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid branch id",
+		})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	collection := config.DB.Collection("branches")
+
+	var branch models.Branch
+	err = collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&branch)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "branch not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": branch,
+	})
+}
+
+func UpdateBranch(c *gin.Context) {
+	idParam := c.Param("id")
+
+	objectID, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid branch id",
+		})
+		return
+	}
+
+	var input models.Branch
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid request body",
+		})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	collection := config.DB.Collection("branches")
+
+	update := bson.M{
+		"$set": bson.M{
+			"name":     input.Name,
+			"location": input.Location,
+			"phone":    input.Phone,
+		},
+	}
+
+	result, err := collection.UpdateOne(ctx, bson.M{"_id": objectID}, update)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to update branch",
+		})
+		return
+	}
+
+	if result.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "branch not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "branch updated successfully",
+	})
+}
+
+func DeleteBranch(c *gin.Context) {
+	idParam := c.Param("id")
+
+	objectID, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid branch id",
+		})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	collection := config.DB.Collection("branches")
+
+	result, err := collection.DeleteOne(ctx, bson.M{"_id": objectID})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to delete branch",
+		})
+		return
+	}
+
+	if result.DeletedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "branch not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "branch deleted successfully",
 	})
 }
