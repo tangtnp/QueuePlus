@@ -12,6 +12,7 @@ import (
 	"github.com/tangtnp/queueplus/backend/internal/models"
 	"github.com/tangtnp/queueplus/backend/internal/utils"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -206,5 +207,56 @@ func Logout(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "logout successful",
+	})
+}
+
+func GetMe(c *gin.Context) {
+	userIDValue, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "user not found in context",
+		})
+		return
+	}
+
+	userID, ok := userIDValue.(string)
+	if !ok || userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid user id in context",
+		})
+		return
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid user id format",
+		})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	userCollection := config.DB.Collection("users")
+
+	var user models.User
+	err = userCollection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&user)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "user not found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"user": gin.H{
+			"id":        user.ID.Hex(),
+			"name":      user.Name,
+			"email":     user.Email,
+			"role":      user.Role,
+			"createdAt": user.CreatedAt,
+			"updatedAt": user.UpdatedAt,
+		},
 	})
 }

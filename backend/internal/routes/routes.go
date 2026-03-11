@@ -14,6 +14,7 @@ func SetupRoutes(r *gin.Engine) {
 		api.POST("/auth/register", handlers.Register)
 		api.POST("/auth/login", handlers.Login)
 		api.POST("/auth/logout", middleware.AuthMiddleware(), handlers.Logout)
+		api.GET("/auth/me", middleware.AuthMiddleware(), handlers.GetMe)
 
 		// public or customer-accessible
 		api.GET("/branches", handlers.GetBranches)
