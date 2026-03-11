@@ -10,6 +10,9 @@ func SetupRoutes(r *gin.Engine) {
 	{
 		api.GET("/health", handlers.HealthCheck)
 
+		api.POST("/auth/register", handlers.Register)
+		api.POST("/auth/login", handlers.Login)
+
 		api.POST("/branches", handlers.CreateBranch)
 		api.GET("/branches", handlers.GetBranches)
 		api.GET("/branches/:id", handlers.GetBranchByID)
