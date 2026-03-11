@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -164,24 +165,46 @@ func Login(c *gin.Context) {
 		})
 		return
 	}
-	
+
+	isProd := os.Getenv("APP_ENV") == "production"
+
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(
-    	"access_token",
-    	token,
-    	3600*24,   // 1 day
-    	"/",
-    	"localhost",
-    	false,
-    	true, // httpOnly
+		"access_token",
+		token,
+		60*60*24,
+		"/",
+		"",
+		isProd,
+		true,
 	)
 
 	c.JSON(http.StatusOK, gin.H{
-    	"message": "login successful",
-    	"user": gin.H{
-        	"id":    user.ID.Hex(),
-        	"name":  user.Name,
-        	"email": user.Email,
-        	"role":  user.Role,
-    	},
+		"message": "login successful",
+		"user": gin.H{
+			"id":    user.ID.Hex(),
+			"name":  user.Name,
+			"email": user.Email,
+			"role":  user.Role,
+		},
+	})
+}
+
+func Logout(c *gin.Context) {
+	isProd := os.Getenv("APP_ENV") == "production"
+
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie(
+		"access_token",
+		"",
+		-1,
+		"/",
+		"",
+		isProd,
+		true,
+	)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "logout successful",
 	})
 }

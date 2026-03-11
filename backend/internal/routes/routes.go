@@ -12,6 +12,7 @@ func SetupRoutes(r *gin.Engine) {
 
 		api.POST("/auth/register", handlers.Register)
 		api.POST("/auth/login", handlers.Login)
+		api.POST("/auth/logout", handlers.Logout)
 
 		api.POST("/branches", handlers.CreateBranch)
 		api.GET("/branches", handlers.GetBranches)
