@@ -10,6 +10,7 @@ func SetupRoutes(r *gin.Engine) {
 	api := r.Group("/api/v1")
 	{
 		api.GET("/health", handlers.HealthCheck)
+		api.GET("/monitor/system", handlers.GetSystemMonitor)
 
 		api.POST("/auth/register", handlers.Register)
 		api.POST("/auth/login", middleware.LoginRateLimitMiddleware(), handlers.Login)
