@@ -12,11 +12,10 @@ func SetupRoutes(r *gin.Engine) {
 		api.GET("/health", handlers.HealthCheck)
 
 		api.POST("/auth/register", handlers.Register)
-		api.POST("/auth/login", handlers.Login)
+		api.POST("/auth/login", middleware.LoginRateLimitMiddleware(), handlers.Login)
 		api.POST("/auth/logout", middleware.AuthMiddleware(), handlers.Logout)
 		api.GET("/auth/me", middleware.AuthMiddleware(), handlers.GetMe)
 
-		// public or customer-accessible
 		api.GET("/branches", handlers.GetBranches)
 		api.GET("/branches/:id", handlers.GetBranchByID)
 
@@ -27,7 +26,6 @@ func SetupRoutes(r *gin.Engine) {
 		api.GET("/queues", handlers.GetQueues)
 		api.GET("/queues/:id", handlers.GetQueueByID)
 
-		// admin only
 		admin := api.Group("/")
 		admin.Use(middleware.AuthMiddleware(), middleware.RequireRoles("admin"))
 		{
@@ -40,7 +38,6 @@ func SetupRoutes(r *gin.Engine) {
 			admin.DELETE("/services/:id", handlers.DeleteService)
 		}
 
-		// staff and admin
 		staffOrAdmin := api.Group("/")
 		staffOrAdmin.Use(middleware.AuthMiddleware(), middleware.RequireRoles("staff", "admin"))
 		{

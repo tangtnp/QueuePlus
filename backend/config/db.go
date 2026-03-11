@@ -36,5 +36,15 @@ func ConnectDB() {
 	}
 
 	DB = client.Database(dbName)
+
+	_, err = DB.Collection("blacklisted_tokens").Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys: map[string]interface{}{
+			"token": 1,
+		},
+	})
+	if err != nil {
+		log.Println("warning: failed to create blacklist index:", err)
+	}
+
 	log.Println("connected to MongoDB:", dbName)
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/tangtnp/queueplus/backend/config"
 	"github.com/tangtnp/queueplus/backend/internal/models"
 	"github.com/tangtnp/queueplus/backend/internal/utils"
+	"github.com/tangtnp/queueplus/backend/internal/middleware"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
@@ -145,6 +146,8 @@ func Login(c *gin.Context) {
 	var user models.User
 	err := userCollection.FindOne(ctx, bson.M{"email": input.Email}).Decode(&user)
 	if err != nil {
+		middleware.RegisterLoginFailure(c.ClientIP())
+
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "invalid email or password",
 		})
@@ -153,11 +156,15 @@ func Login(c *gin.Context) {
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password))
 	if err != nil {
+		middleware.RegisterLoginFailure(c.ClientIP())
+
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "invalid email or password",
 		})
 		return
 	}
+
+	middleware.ResetLoginAttempts(c.ClientIP())
 
 	token, err := utils.GenerateJWT(user.ID.Hex(), user.Email, user.Role)
 	if err != nil {
@@ -192,6 +199,23 @@ func Login(c *gin.Context) {
 }
 
 func Logout(c *gin.Context) {
+	tokenString, err := c.Cookie("access_token")
+	if err == nil && tokenString != "" {
+		claims, parseErr := utils.ParseJWT(tokenString)
+		if parseErr == nil && claims.ExpiresAt != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			blacklistCollection := config.DB.Collection("blacklisted_tokens")
+
+			_, _ = blacklistCollection.InsertOne(ctx, bson.M{
+				"token":     tokenString,
+				"expiresAt": claims.ExpiresAt.Time,
+				"createdAt": time.Now().UTC(),
+			})
+		}
+	}
+
 	isProd := os.Getenv("APP_ENV") == "production"
 
 	c.SetSameSite(http.SameSiteLaxMode)
