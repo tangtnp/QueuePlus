@@ -9,5 +9,8 @@ func SetupRoutes(r *gin.Engine) {
 	api := r.Group("/api/v1")
 	{
 		api.GET("/health", handlers.HealthCheck)
+
+		api.POST("/branches", handlers.CreateBranch)
+		api.GET("/branches", handlers.GetBranches)
 	}
 }

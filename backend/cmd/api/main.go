@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/tangtnp/queueplus/backend/config"
 	"github.com/tangtnp/queueplus/backend/internal/routes"
 )
 
@@ -17,8 +18,9 @@ func main() {
 		port = "8080"
 	}
 
-	r := gin.Default()
+	config.ConnectDB()
 
+	r := gin.Default()
 	routes.SetupRoutes(r)
 
 	log.Printf("server running at http://localhost:%s", port)
