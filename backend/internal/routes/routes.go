@@ -15,5 +15,11 @@ func SetupRoutes(r *gin.Engine) {
 		api.GET("/branches/:id", handlers.GetBranchByID)
 		api.PUT("/branches/:id", handlers.UpdateBranch)
 		api.DELETE("/branches/:id", handlers.DeleteBranch)
+
+		api.POST("/services", handlers.CreateService)
+		api.GET("/services", handlers.GetServices)
+		api.GET("/services/:id", handlers.GetServiceByID)
+		api.PUT("/services/:id", handlers.UpdateService)
+		api.DELETE("/services/:id", handlers.DeleteService)
 	}
 }
