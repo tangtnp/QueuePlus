@@ -21,5 +21,10 @@ func SetupRoutes(r *gin.Engine) {
 		api.GET("/services/:id", handlers.GetServiceByID)
 		api.PUT("/services/:id", handlers.UpdateService)
 		api.DELETE("/services/:id", handlers.DeleteService)
+
+		api.POST("/queues", handlers.CreateQueue)
+		api.GET("/queues", handlers.GetQueues)
+		api.GET("/queues/:id", handlers.GetQueueByID)
+		api.PATCH("/queues/:id/status", handlers.UpdateQueueStatus)
 	}
 }
