@@ -68,6 +68,8 @@ func CreateService(c *gin.Context) {
 		Description:  input.Description,
 		DurationMins: input.DurationMins,
 		BranchID:     branchObjectID,
+		IsDeleted:    false,
+		DeletedAt:    nil,
 	}
 
 	serviceCollection := config.DB.Collection("services")
@@ -91,7 +93,9 @@ func GetServices(c *gin.Context) {
 
 	collection := config.DB.Collection("services")
 
-	filter := bson.M{}
+	filter := bson.M{
+		"isDeleted": bson.M{"$ne": true},
+	}
 
 	branchID := c.Query("branchId")
 	if branchID != "" {
@@ -144,7 +148,10 @@ func GetServiceByID(c *gin.Context) {
 	collection := config.DB.Collection("services")
 
 	var service models.Service
-	err = collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&service)
+	err = collection.FindOne(ctx, bson.M{
+		"_id":       objectID,
+		"isDeleted": bson.M{"$ne": true},
+	}).Decode(&service)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "service not found",
@@ -221,7 +228,14 @@ func UpdateService(c *gin.Context) {
 		},
 	}
 
-	result, err := collection.UpdateOne(ctx, bson.M{"_id": serviceObjectID}, update)
+	result, err := collection.UpdateOne(
+		ctx,
+		bson.M{
+			"_id":       serviceObjectID,
+			"isDeleted": bson.M{"$ne": true},
+		},
+		update,
+	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "failed to update service",
@@ -231,7 +245,7 @@ func UpdateService(c *gin.Context) {
 
 	if result.MatchedCount == 0 {
 		c.JSON(http.StatusNotFound, gin.H{
-			"error": "service not found",
+			"error": "service not found or already deleted",
 		})
 		return
 	}
@@ -252,6 +266,56 @@ func DeleteService(c *gin.Context) {
 		return
 	}
 
+	now := time.Now().UTC()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	collection := config.DB.Collection("services")
+
+	result, err := collection.UpdateOne(
+		ctx,
+		bson.M{
+			"_id":       objectID,
+			"isDeleted": bson.M{"$ne": true},
+		},
+		bson.M{
+			"$set": bson.M{
+				"isDeleted": true,
+				"deletedAt": now,
+			},
+		},
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to soft delete service",
+		})
+		return
+	}
+
+	if result.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "service not found or already deleted",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "service soft deleted successfully",
+	})
+}
+
+func HardDeleteService(c *gin.Context) {
+	idParam := c.Param("id")
+
+	objectID, err := primitive.ObjectIDFromHex(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid service id",
+		})
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -260,7 +324,7 @@ func DeleteService(c *gin.Context) {
 	result, err := collection.DeleteOne(ctx, bson.M{"_id": objectID})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "failed to delete service",
+			"error": "failed to hard delete service",
 		})
 		return
 	}
@@ -273,6 +337,6 @@ func DeleteService(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "service deleted successfully",
+		"message": "service hard deleted successfully",
 	})
 }

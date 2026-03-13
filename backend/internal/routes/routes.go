@@ -37,6 +37,7 @@ func SetupRoutes(r *gin.Engine) {
 			admin.POST("/services", handlers.CreateService)
 			admin.PUT("/services/:id", handlers.UpdateService)
 			admin.DELETE("/services/:id", handlers.DeleteService)
+			admin.DELETE("/services/:id/hard", handlers.HardDeleteService)
 		}
 
 		staffOrAdmin := api.Group("/")
