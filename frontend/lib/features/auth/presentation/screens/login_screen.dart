@@ -1,14 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../data/services/auth_service.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
+  State<LoginScreen> createState() => _LoginScreenState();
+}
 
+class _LoginScreenState extends State<LoginScreen> {
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final authService = AuthService();
+
+  bool isLoading = false;
+  String? errorMessage;
+
+  Future<void> handleLogin() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      await authService.login(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      if (!mounted) return;
+      context.go('/home');
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Login failed: $e';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('QueuePlus Login'),
@@ -45,14 +89,24 @@ class LoginScreen extends StatelessWidget {
                     border: OutlineInputBorder(),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
+                if (errorMessage != null)
+                  Text(
+                    errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: () {
-                      context.go('/home');
-                    },
-                    child: const Text('Login'),
+                    onPressed: isLoading ? null : handleLogin,
+                    child: isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Login'),
                   ),
                 ),
               ],
