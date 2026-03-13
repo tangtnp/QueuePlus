@@ -12,6 +12,7 @@ type Service struct {
 	Description  string             `bson:"description" json:"description"`
 	DurationMins int                `bson:"durationMins" json:"durationMins"`
 	BranchID     primitive.ObjectID `bson:"branchId" json:"branchId"`
+	Tags         []string           `bson:"tags" json:"tags"`
 	IsDeleted    bool               `bson:"isDeleted" json:"isDeleted"`
 	DeletedAt    *time.Time         `bson:"deletedAt,omitempty" json:"deletedAt,omitempty"`
 }

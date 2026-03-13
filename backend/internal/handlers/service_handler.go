@@ -13,10 +13,11 @@ import (
 )
 
 type CreateServiceInput struct {
-	Name         string `json:"name"`
-	Description  string `json:"description"`
-	DurationMins int    `json:"durationMins"`
-	BranchID     string `json:"branchId"`
+	Name         string   `json:"name"`
+	Description  string   `json:"description"`
+	DurationMins int      `json:"durationMins"`
+	BranchID     string   `json:"branchId"`
+	Tags         []string `json:"tags"`
 }
 
 func CreateService(c *gin.Context) {
@@ -68,6 +69,7 @@ func CreateService(c *gin.Context) {
 		Description:  input.Description,
 		DurationMins: input.DurationMins,
 		BranchID:     branchObjectID,
+		Tags:         input.Tags,
 		IsDeleted:    false,
 		DeletedAt:    nil,
 	}
@@ -225,6 +227,7 @@ func UpdateService(c *gin.Context) {
 			"description":  input.Description,
 			"durationMins": input.DurationMins,
 			"branchId":     branchObjectID,
+			"tags":         input.Tags,
 		},
 	}
 
@@ -338,5 +341,52 @@ func HardDeleteService(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "service hard deleted successfully",
+	})
+}
+
+func SearchServicesByTags(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	collection := config.DB.Collection("services")
+
+	tags := c.QueryArray("tags")
+	if len(tags) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "at least one tags query param is required",
+		})
+		return
+	}
+
+	filter := bson.M{
+		"isDeleted": bson.M{"$ne": true},
+		"tags": bson.M{
+			"$all": tags,
+		},
+	}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to search services by tags",
+		})
+		return
+	}
+	defer cursor.Close(ctx)
+
+	var services []models.Service
+	if err := cursor.All(ctx, &services); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to decode services",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"filters": gin.H{
+			"tags": tags,
+		},
+		"count": len(services),
+		"data":  services,
 	})
 }

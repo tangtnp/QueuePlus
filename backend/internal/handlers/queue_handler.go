@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tangtnp/queueplus/backend/config"
 	"github.com/tangtnp/queueplus/backend/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type CreateQueueInput struct {
@@ -171,7 +173,45 @@ func GetQueues(c *gin.Context) {
 		filter["status"] = status
 	}
 
-	cursor, err := collection.Find(ctx, filter)
+	page := 1
+	limit := 10
+
+	if pageQuery := c.Query("page"); pageQuery != "" {
+		if parsedPage, err := strconv.Atoi(pageQuery); err == nil && parsedPage > 0 {
+			page = parsedPage
+		}
+	}
+
+	if limitQuery := c.Query("limit"); limitQuery != "" {
+		if parsedLimit, err := strconv.Atoi(limitQuery); err == nil && parsedLimit > 0 && parsedLimit <= 100 {
+			limit = parsedLimit
+		}
+	}
+
+	skip := (page - 1) * limit
+
+	sortBy := c.DefaultQuery("sortBy", "createdAt")
+	sortOrder := c.DefaultQuery("sortOrder", "desc")
+
+	sortDirection := -1
+	if sortOrder == "asc" {
+		sortDirection = 1
+	}
+
+	totalCount, err := collection.CountDocuments(ctx, filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to count queues",
+		})
+		return
+	}
+
+	findOptions := options.Find().
+		SetSkip(int64(skip)).
+		SetLimit(int64(limit)).
+		SetSort(bson.D{{Key: sortBy, Value: sortDirection}})
+
+	cursor, err := collection.Find(ctx, filter, findOptions)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "failed to fetch queues",
@@ -188,7 +228,24 @@ func GetQueues(c *gin.Context) {
 		return
 	}
 
+	totalPages := int((totalCount + int64(limit) - 1) / int64(limit))
+
 	c.JSON(http.StatusOK, gin.H{
+		"pagination": gin.H{
+			"page":       page,
+			"limit":      limit,
+			"totalCount": totalCount,
+			"totalPages": totalPages,
+			"hasNext":    page < totalPages,
+			"hasPrev":    page > 1,
+		},
+		"filters": gin.H{
+			"branchId":  branchID,
+			"serviceId": serviceID,
+			"status":    status,
+			"sortBy":    sortBy,
+			"sortOrder": sortOrder,
+		},
 		"data": queues,
 	})
 }

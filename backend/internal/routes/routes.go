@@ -21,11 +21,14 @@ func SetupRoutes(r *gin.Engine) {
 		api.GET("/branches/:id", handlers.GetBranchByID)
 
 		api.GET("/services", handlers.GetServices)
+		api.GET("/services/search/by-tags", handlers.SearchServicesByTags)
 		api.GET("/services/:id", handlers.GetServiceByID)
+		
 
 		api.POST("/queues", handlers.CreateQueue)
 		api.GET("/queues", handlers.GetQueues)
 		api.GET("/queues/:id", handlers.GetQueueByID)
+	
 
 		admin := api.Group("/")
 		admin.Use(middleware.AuthMiddleware(), middleware.RequireRoles("admin"))
@@ -44,6 +47,7 @@ func SetupRoutes(r *gin.Engine) {
 		staffOrAdmin.Use(middleware.AuthMiddleware(), middleware.RequireRoles("staff", "admin"))
 		{
 			staffOrAdmin.PATCH("/queues/:id/status", handlers.UpdateQueueStatus)
+			staffOrAdmin.GET("/dashboard/queue-stats", handlers.GetQueueStats)
 		}
 	}
 }
