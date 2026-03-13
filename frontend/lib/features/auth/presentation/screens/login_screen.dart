@@ -1,48 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import '../../data/services/auth_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/auth_provider.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final authService = AuthService();
-
-  bool isLoading = false;
-  String? errorMessage;
-
-  Future<void> handleLogin() async {
-    setState(() {
-      isLoading = true;
-      errorMessage = null;
-    });
-
-    try {
-      await authService.login(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-
-      if (!mounted) return;
-      context.go('/home');
-    } catch (e) {
-      setState(() {
-        errorMessage = 'Login failed: $e';
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
-    }
-  }
 
   @override
   void dispose() {
@@ -51,8 +20,18 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> handleLogin() async {
+    await ref.read(authProvider.notifier).login(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+    final isLoading = authState.status == AuthStatus.loading;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('QueuePlus Login'),
@@ -90,10 +69,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                if (errorMessage != null)
+                if (authState.errorMessage != null)
                   Text(
-                    errorMessage!,
+                    authState.errorMessage!,
                     style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
                   ),
                 const SizedBox(height: 12),
                 SizedBox(
@@ -102,8 +82,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: isLoading ? null : handleLogin,
                     child: isLoading
                         ? const SizedBox(
-                            height: 20,
                             width: 20,
+                            height: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Text('Login'),
