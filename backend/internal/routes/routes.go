@@ -11,8 +11,10 @@ func SetupRoutes(r *gin.Engine) {
 	{
 		api.GET("/health", handlers.HealthCheck)
 		api.GET("/monitor/system", handlers.GetSystemMonitor)
-		api.GET("/external/posts", handlers.GetExternalPosts)
+		api.GET("/monitor/runtime", handlers.GetRuntimeMonitor)
 		
+		api.GET("/external/posts", handlers.GetExternalPosts)
+
 		api.POST("/auth/register", handlers.Register)
 		api.POST("/auth/login", middleware.LoginRateLimitMiddleware(), handlers.Login)
 		api.POST("/auth/logout", middleware.AuthMiddleware(), handlers.Logout)
