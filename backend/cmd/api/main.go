@@ -8,6 +8,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/tangtnp/queueplus/backend/config"
 	"github.com/tangtnp/queueplus/backend/internal/routes"
+	"github.com/tangtnp/queueplus/backend/internal/middleware"
 )
 
 func main() {
@@ -21,6 +22,8 @@ func main() {
 	config.ConnectDB()
 
 	r := gin.Default()
+	r.Use(middleware.IPBlockerMiddleware())
+
 	routes.SetupRoutes(r)
 
 	log.Printf("server running at http://localhost:%s", port)
