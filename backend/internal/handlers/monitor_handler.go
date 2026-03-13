@@ -10,6 +10,13 @@ import (
 
 var appStartTime = time.Now()
 
+// GetSystemMonitor godoc
+// @Summary System monitor
+// @Description Get basic system information from the running server
+// @Tags Monitor
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /monitor/system [get]
 func GetSystemMonitor(c *gin.Context) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)

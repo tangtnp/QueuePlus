@@ -28,7 +28,17 @@ type LoginInput struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
-
+// Register godoc
+// @Summary Register user
+// @Description Register a new user with hashed password
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body handlers.RegisterInput true "Register input"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 409 {object} map[string]interface{}
+// @Router /auth/register [post]
 func Register(c *gin.Context) {
 	var input RegisterInput
 
@@ -118,7 +128,18 @@ func Register(c *gin.Context) {
 		"role":    user.Role,
 	})
 }
-
+// Login godoc
+// @Summary Login user
+// @Description Login user and set JWT in HttpOnly cookie
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body handlers.LoginInput true "Login input"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 429 {object} map[string]interface{}
+// @Router /auth/login [post]
 func Login(c *gin.Context) {
 	var input LoginInput
 
@@ -197,7 +218,14 @@ func Login(c *gin.Context) {
 		},
 	})
 }
-
+// Logout godoc
+// @Summary Logout user
+// @Description Logout current user and blacklist current token
+// @Tags Auth
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Router /auth/logout [post]
 func Logout(c *gin.Context) {
 	tokenString, err := c.Cookie("access_token")
 	if err == nil && tokenString != "" {
@@ -233,7 +261,14 @@ func Logout(c *gin.Context) {
 		"message": "logout successful",
 	})
 }
-
+// GetMe godoc
+// @Summary Current user
+// @Description Get current authenticated user from session token
+// @Tags Auth
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Router /auth/me [get]
 func GetMe(c *gin.Context) {
 	userIDValue, exists := c.Get("userId")
 	if !exists {

@@ -25,6 +25,16 @@ type UpdateQueueStatusInput struct {
 	Status string `json:"status"`
 }
 
+// CreateQueue godoc
+// @Summary Create queue
+// @Description Create a new queue for a customer under a branch and service
+// @Tags Queues
+// @Accept json
+// @Produce json
+// @Param request body handlers.CreateQueueInput true "Queue payload"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Router /queues [post]
 func CreateQueue(c *gin.Context) {
 	var input CreateQueueInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -136,6 +146,21 @@ func CreateQueue(c *gin.Context) {
 	})
 }
 
+// GetQueues godoc
+// @Summary List queues
+// @Description Get queues with filtering, pagination, and sorting
+// @Tags Queues
+// @Produce json
+// @Param branchId query string false "Branch ID"
+// @Param serviceId query string false "Service ID"
+// @Param status query string false "Queue status"
+// @Param page query int false "Page number"
+// @Param limit query int false "Items per page"
+// @Param sortBy query string false "Sort field"
+// @Param sortOrder query string false "asc or desc"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Router /queues [get]
 func GetQueues(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -250,6 +275,16 @@ func GetQueues(c *gin.Context) {
 	})
 }
 
+// GetQueueByID godoc
+// @Summary Get queue by ID
+// @Description Get a single queue by ID
+// @Tags Queues
+// @Produce json
+// @Param id path string true "Queue ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /queues/{id} [get]
 func GetQueueByID(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -280,6 +315,21 @@ func GetQueueByID(c *gin.Context) {
 	})
 }
 
+// UpdateQueueStatus godoc
+// @Summary Update queue status
+// @Description Update queue status such as waiting, serving, done, or cancelled
+// @Tags Queues
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Queue ID"
+// @Param request body handlers.UpdateQueueStatusInput true "Queue status payload"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /queues/{id}/status [patch]
 func UpdateQueueStatus(c *gin.Context) {
 	idParam := c.Param("id")
 

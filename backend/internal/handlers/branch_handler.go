@@ -11,7 +11,19 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
-
+// CreateBranch godoc
+// @Summary Create branch
+// @Description Create a new branch
+// @Tags Branches
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body models.Branch true "Branch payload"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Router /branches [post]
 func CreateBranch(c *gin.Context) {
 	var branch models.Branch
 
@@ -41,6 +53,13 @@ func CreateBranch(c *gin.Context) {
 	})
 }
 
+// GetBranches godoc
+// @Summary List branches
+// @Description Get all branches
+// @Tags Branches
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /branches [get]
 func GetBranches(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -69,6 +88,16 @@ func GetBranches(c *gin.Context) {
 	})
 }
 
+// GetBranchByID godoc
+// @Summary Get branch by ID
+// @Description Get a single branch by its ID
+// @Tags Branches
+// @Produce json
+// @Param id path string true "Branch ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /branches/{id} [get]
 func GetBranchByID(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -99,6 +128,21 @@ func GetBranchByID(c *gin.Context) {
 	})
 }
 
+// UpdateBranch godoc
+// @Summary Update branch
+// @Description Update branch by ID
+// @Tags Branches
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Branch ID"
+// @Param request body models.Branch true "Branch payload"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /branches/{id} [put]
 func UpdateBranch(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -151,6 +195,19 @@ func UpdateBranch(c *gin.Context) {
 	})
 }
 
+// DeleteBranch godoc
+// @Summary Delete branch
+// @Description Hard delete branch by ID
+// @Tags Branches
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Branch ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /branches/{id} [delete]
 func DeleteBranch(c *gin.Context) {
 	idParam := c.Param("id")
 

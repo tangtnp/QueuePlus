@@ -22,6 +22,14 @@ type TransformedPost struct {
 	Summary string `json:"summary"`
 }
 
+// GetExternalPosts godoc
+// @Summary External posts
+// @Description Fetch posts from an external API and transform the response
+// @Tags External
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 502 {object} map[string]interface{}
+// @Router /external/posts [get]
 func GetExternalPosts(c *gin.Context) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

@@ -20,6 +20,19 @@ type CreateServiceInput struct {
 	Tags         []string `json:"tags"`
 }
 
+// CreateService godoc
+// @Summary Create service
+// @Description Create a new service under a branch
+// @Tags Services
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body handlers.CreateServiceInput true "Service payload"
+// @Success 201 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Router /services [post]
 func CreateService(c *gin.Context) {
 	var input CreateServiceInput
 
@@ -89,6 +102,15 @@ func CreateService(c *gin.Context) {
 	})
 }
 
+// GetServices godoc
+// @Summary List services
+// @Description Get all non-deleted services, optionally filtered by branchId
+// @Tags Services
+// @Produce json
+// @Param branchId query string false "Branch ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Router /services [get]
 func GetServices(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -133,6 +155,16 @@ func GetServices(c *gin.Context) {
 	})
 }
 
+// GetServiceByID godoc
+// @Summary Get service by ID
+// @Description Get a single non-deleted service by ID
+// @Tags Services
+// @Produce json
+// @Param id path string true "Service ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /services/{id} [get]
 func GetServiceByID(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -166,6 +198,21 @@ func GetServiceByID(c *gin.Context) {
 	})
 }
 
+// UpdateService godoc
+// @Summary Update service
+// @Description Update a non-deleted service by ID
+// @Tags Services
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Service ID"
+// @Param request body handlers.CreateServiceInput true "Service payload"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /services/{id} [put]
 func UpdateService(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -258,6 +305,19 @@ func UpdateService(c *gin.Context) {
 	})
 }
 
+// DeleteService godoc
+// @Summary Soft delete service
+// @Description Soft delete service by setting isDeleted=true
+// @Tags Services
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Service ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /services/{id} [delete]
 func DeleteService(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -308,6 +368,19 @@ func DeleteService(c *gin.Context) {
 	})
 }
 
+// HardDeleteService godoc
+// @Summary Hard delete service
+// @Description Permanently delete service by ID
+// @Tags Services
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Service ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /services/{id}/hard [delete]
 func HardDeleteService(c *gin.Context) {
 	idParam := c.Param("id")
 
@@ -344,6 +417,15 @@ func HardDeleteService(c *gin.Context) {
 	})
 }
 
+// SearchServicesByTags godoc
+// @Summary Search services by tags
+// @Description Search non-deleted services using MongoDB $all operator on tags
+// @Tags Services
+// @Produce json
+// @Param tags query []string true "Tags" collectionFormat(multi)
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Router /services/search/by-tags [get]
 func SearchServicesByTags(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

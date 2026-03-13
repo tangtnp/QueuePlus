@@ -8,6 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GetRuntimeMonitor godoc
+// @Summary Runtime monitor
+// @Description Get Go runtime metrics such as goroutines, memory usage, and GC stats
+// @Tags Monitor
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /monitor/runtime [get]
 func GetRuntimeMonitor(c *gin.Context) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)

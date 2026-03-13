@@ -10,6 +10,16 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+// GetQueueStats godoc
+// @Summary Queue dashboard stats
+// @Description Get queue statistics using MongoDB aggregation pipeline
+// @Tags Dashboard
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Router /dashboard/queue-stats [get]
 func GetQueueStats(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
