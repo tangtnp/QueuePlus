@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -21,13 +22,24 @@ class HomeScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text(
-                'Frontend started successfully',
-                style: TextStyle(fontSize: 20),
+                'Welcome to QueuePlus',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
               Text('User: ${user?['email'] ?? 'Unknown'}'),
-              const SizedBox(height: 8),
-              Text('Raw data: $user'),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    context.go('/branches');
+                  },
+                  child: const Text('Browse Branches'),
+                ),
+              ),
             ],
           ),
         ),

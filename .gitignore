@@ -2,6 +2,7 @@
 .env
 backend/.env
 frontend/.env
+frontend/lib/core/config/*
 
 # Go
 backend/bin/

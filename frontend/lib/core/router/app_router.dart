@@ -4,6 +4,8 @@ import 'package:frontend1/features/auth/presentation/providers/auth_provider.dar
 import 'package:frontend1/features/auth/presentation/screens/login_screen.dart';
 import 'package:frontend1/features/auth/presentation/screens/splash_screen.dart';
 import 'package:frontend1/features/home/presentation/screens/home_screen.dart';
+import 'package:frontend1/features/branches/presentation/screens/branch_list_screen.dart';
+import 'package:frontend1/features/services/presentation/screens/service_list_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -43,6 +45,23 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/home',
         builder: (context, state) => const HomeScreen(),
       ),
+      GoRoute(
+        path: '/branches',
+        builder: (context, state) => const BranchListScreen(),
+      ),
+      GoRoute(
+        path: '/branches/:branchId/services',
+        builder: (context, state) {
+          final branchId = state.pathParameters['branchId'] ?? '';
+          final branchName = state.extra as String? ?? 'Branch';
+      
+          return ServiceListScreen(
+            branchId: branchId,
+            branchName: branchName,
+          );
+        },
+      ),
     ],
   );
+
 });
