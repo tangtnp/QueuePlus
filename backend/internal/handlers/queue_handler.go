@@ -352,8 +352,9 @@ func UpdateQueueStatus(c *gin.Context) {
 	validStatuses := map[string]bool{
 		"waiting":   true,
 		"serving":   true,
-		"done":      true,
+		"completed": true,
 		"cancelled": true,
+		"called" : true,
 	}
 
 	if !validStatuses[input.Status] {
