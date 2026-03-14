@@ -20,8 +20,8 @@ var (
 )
 
 const (
-	maxRequestsPerWindow = 50
-	windowDuration       = 30 * time.Second
+	maxRequestsPerWindow = 100
+	windowDuration       = 1 * time.Second
 	ipBlockDuration        = 1 * time.Minute
 )
 

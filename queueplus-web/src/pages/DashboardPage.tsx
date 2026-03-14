@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import DashboardLayout from "../layouts/DashboardLayout";
+import DashboardCard from "../components/ui/DashboardCard";
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
@@ -10,40 +10,46 @@ export default function DashboardPage() {
       title="Dashboard"
       description="Overview for staff and admin"
     >
-      <div className="grid gap-4 md:grid-cols-3">
-        <Link
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <DashboardCard
           to="/queues"
-          className="rounded-2xl bg-white p-6 shadow-sm transition hover:shadow-md"
-        >
-          <h2 className="text-xl font-semibold text-slate-900">Queue Board</h2>
-          <p className="mt-2 text-slate-500">
-            View queues and update queue status
-          </p>
-        </Link>
+          title="Queue Board"
+          description="View queues and update queue status"
+        />
 
         {user?.role === "admin" && (
           <>
-            <Link
+            <DashboardCard
               to="/branches"
-              className="rounded-2xl bg-white p-6 shadow-sm transition hover:shadow-md"
-            >
-              <h2 className="text-xl font-semibold text-slate-900">Branches</h2>
-              <p className="mt-2 text-slate-500">
-                Create, edit, and manage branches
-              </p>
-            </Link>
+              title="Branches"
+              description="Create, edit, and manage branches"
+            />
 
-            <Link
+            <DashboardCard
               to="/services"
-              className="rounded-2xl bg-white p-6 shadow-sm transition hover:shadow-md"
-            >
-              <h2 className="text-xl font-semibold text-slate-900">Services</h2>
-              <p className="mt-2 text-slate-500">
-                Create, edit, search, and manage services
-              </p>
-            </Link>
+              title="Services"
+              description="Create, edit, search, and manage services"
+            />
           </>
         )}
+
+        <DashboardCard
+          to="/health"
+          title="Health Check"
+          description="Check basic backend health status"
+        />
+
+        <DashboardCard
+          to="/monitor/system"
+          title="System Monitor"
+          description="View system-level server information"
+        />
+
+        <DashboardCard
+          to="/monitor/runtime"
+          title="Runtime Monitor"
+          description="View application runtime information"
+        />
       </div>
     </DashboardLayout>
   );
