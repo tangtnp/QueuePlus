@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { branchApi } from "../api/branch";
 import type { Branch, BranchPayload } from "../types/branch";
+import DashboardLayout from "../layouts/DashboardLayout";
 
 const initialForm: BranchPayload = {
   name: "",
@@ -127,19 +127,11 @@ export default function BranchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 p-8">
+    <DashboardLayout
+    title="Branch Management"
+    description="Create, edit, and delete branch records"
+  >
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6">
-          <Link to="/" className="text-sm text-blue-600 hover:underline">
-            ← Back to Dashboard
-          </Link>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">
-            Branch Management
-          </h1>
-          <p className="mt-1 text-slate-500">
-            Create, edit, and delete branch records
-          </p>
-        </div>
 
         {error && (
           <div className="mb-4 rounded-xl bg-red-50 p-4 text-red-600 shadow-sm">
@@ -295,7 +287,7 @@ export default function BranchPage() {
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
 

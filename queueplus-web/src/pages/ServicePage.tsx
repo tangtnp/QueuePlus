@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { serviceApi } from "../api/service";
 import { branchApi } from "../api/branch";
 import type { ServiceItem, ServicePayload } from "../types/service";
 import type { Branch } from "../types/branch";
+import DashboardLayout from "../layouts/DashboardLayout";
 
 const initialForm: ServicePayload = {
   name: "",
@@ -242,19 +242,11 @@ export default function ServicePage() {
   const branchOptions = useMemo(() => branches || [], [branches]);
 
   return (
-    <div className="min-h-screen bg-slate-100 p-8">
+    <DashboardLayout
+    title="Service Management"
+    description="Create, edit, search, and delete services"
+  >
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6">
-          <Link to="/" className="text-sm text-blue-600 hover:underline">
-            ← Back to Dashboard
-          </Link>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">
-            Service Management
-          </h1>
-          <p className="mt-1 text-slate-500">
-            Create, edit, search, and delete services
-          </p>
-        </div>
 
         {error && (
           <div className="mb-4 rounded-xl bg-red-50 p-4 text-red-600 shadow-sm">
@@ -382,7 +374,7 @@ export default function ServicePage() {
                 )}
               </div>
             </form>
-          </div>
+        </div>
 
           <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
             <div className="border-b border-slate-200 px-6 py-4">
@@ -540,7 +532,7 @@ export default function ServicePage() {
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
 

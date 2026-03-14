@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { queueApi } from "../api/queue";
 import { branchApi } from "../api/branch";
 import { serviceApi } from "../api/service";
 import type { QueueItem, QueuePagination, QueueStats } from "../types/queue";
 import type { Branch } from "../types/branch";
 import type { ServiceItem } from "../types/service";
+import DashboardLayout from "../layouts/DashboardLayout";
 
 const statusButtonMap = [
   { label: "Call", value: "called", className: "bg-blue-500 hover:bg-blue-600" },
@@ -134,19 +134,12 @@ export default function QueueBoardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 p-8">
+    <DashboardLayout
+      title="Queue Board"
+      description="Staff and admin can monitor and update queue status here"
+    >
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <Link to="/" className="text-sm text-blue-600 hover:underline">
-              ← Back to Dashboard
-            </Link>
-            <h1 className="mt-2 text-3xl font-bold text-slate-900">Queue Board</h1>
-            <p className="mt-1 text-slate-500">
-              Staff and admin can monitor and update queue status here
-            </p>
-          </div>
-
+        <div className="mb-6 flex justify-end">
           <button
             onClick={() => fetchQueues(false)}
             disabled={isRefreshing}
@@ -310,7 +303,7 @@ export default function QueueBoardPage() {
           </button>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
 

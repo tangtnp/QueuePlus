@@ -1,7 +1,6 @@
 import { api } from "./client";
 import type {
   QueueListResponse,
-  QueuePagination,
   QueueStats,
 } from "../types/queue";
 
