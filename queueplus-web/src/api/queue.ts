@@ -1,12 +1,29 @@
 import { api } from "./client";
-import type { QueueItem, QueueStats } from "../types/queue";
+import type {
+  QueueListResponse,
+  QueuePagination,
+  QueueStats,
+} from "../types/queue";
 
-const normalizeQueueList = (payload: any): QueueItem[] => {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.queues)) return payload.queues;
-  if (Array.isArray(payload?.data?.queues)) return payload.data.queues;
-  if (Array.isArray(payload?.data)) return payload.data;
-  return [];
+interface GetQueuesParams {
+  page?: number;
+  limit?: number;
+  branchId?: string;
+}
+
+const normalizeQueueListResponse = (payload: any): QueueListResponse => {
+  return {
+    data: Array.isArray(payload?.data) ? payload.data : [],
+    filters: payload?.filters ?? {},
+    pagination: payload?.pagination ?? {
+      hasNext: false,
+      hasPrev: false,
+      limit: 10,
+      page: 1,
+      totalCount: 0,
+      totalPages: 1,
+    },
+  };
 };
 
 const normalizeStats = (payload: any): QueueStats => {
@@ -17,9 +34,18 @@ const normalizeStats = (payload: any): QueueStats => {
 };
 
 export const queueApi = {
-  async getQueues(): Promise<QueueItem[]> {
-    const response = await api.get("/queues");
-    return normalizeQueueList(response.data);
+  async getQueues(params?: GetQueuesParams): Promise<QueueListResponse> {
+    const searchParams = new URLSearchParams();
+
+    if (params?.page) searchParams.set("page", String(params.page));
+    if (params?.limit) searchParams.set("limit", String(params.limit));
+    if (params?.branchId) searchParams.set("branchId", params.branchId);
+
+    const query = searchParams.toString();
+    const url = query ? `/queues?${query}` : "/queues";
+
+    const response = await api.get(url);
+    return normalizeQueueListResponse(response.data);
   },
 
   async getQueueStats(): Promise<QueueStats> {

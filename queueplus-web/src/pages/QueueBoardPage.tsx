@@ -1,7 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { queueApi } from "../api/queue.ts";
-import type { QueueItem, QueueStats } from "../types/queue";
+import { queueApi } from "../api/queue";
+import { branchApi } from "../api/branch";
+import { serviceApi } from "../api/service";
+import type { QueueItem, QueuePagination, QueueStats } from "../types/queue";
+import type { Branch } from "../types/branch";
+import type { ServiceItem } from "../types/service";
 
 const statusButtonMap = [
   { label: "Call", value: "called", className: "bg-blue-500 hover:bg-blue-600" },
@@ -13,12 +17,46 @@ const statusButtonMap = [
 export default function QueueBoardPage() {
   const [queues, setQueues] = useState<QueueItem[]>([]);
   const [stats, setStats] = useState<QueueStats>({});
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [services, setServices] = useState<ServiceItem[]>([]);
+
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(5);
+
+  const [pagination, setPagination] = useState<QueuePagination>({
+    hasNext: false,
+    hasPrev: false,
+    limit: 5,
+    page: 1,
+    totalCount: 0,
+    totalPages: 1,
+  });
+
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-  const fetchAll = async (showMainLoader = false) => {
+  const branchMap = useMemo(() => {
+    return new Map(branches.map((branch) => [branch.id, branch.name]));
+  }, [branches]);
+
+  const serviceMap = useMemo(() => {
+    return new Map(services.map((service) => [service.id, service.name]));
+  }, [services]);
+
+  const fetchReferenceData = async () => {
+    const [branchData, serviceData] = await Promise.all([
+      branchApi.getBranches(),
+      serviceApi.getServices(),
+    ]);
+
+    setBranches(branchData);
+    setServices(serviceData);
+  };
+
+  const fetchQueues = async (showMainLoader = false) => {
     try {
       setError(null);
 
@@ -28,12 +66,26 @@ export default function QueueBoardPage() {
         setIsRefreshing(true);
       }
 
-      const [queueData, statsData] = await Promise.all([
-        queueApi.getQueues(),
+      const [queueResponse, statsData] = await Promise.all([
+        queueApi.getQueues({
+          page,
+          limit,
+          branchId: selectedBranchFilter || undefined,
+        }),
         queueApi.getQueueStats(),
       ]);
 
-      setQueues(queueData);
+      setQueues(queueResponse.data);
+      setPagination(
+        queueResponse.pagination ?? {
+          hasNext: false,
+          hasPrev: false,
+          limit,
+          page,
+          totalCount: queueResponse.data.length,
+          totalPages: 1,
+        }
+      );
       setStats(statsData);
     } catch (err: any) {
       setError(
@@ -48,14 +100,18 @@ export default function QueueBoardPage() {
   };
 
   useEffect(() => {
-    fetchAll(true);
+    fetchReferenceData();
   }, []);
+
+  useEffect(() => {
+    fetchQueues(true);
+  }, [page, limit, selectedBranchFilter]);
 
   const handleUpdateStatus = async (id: string, status: string) => {
     try {
       setUpdatingId(id);
       await queueApi.updateQueueStatus(id, status);
-      await fetchAll(false);
+      await fetchQueues(false);
     } catch (err: any) {
       setError(
         err?.response?.data?.message ||
@@ -67,10 +123,20 @@ export default function QueueBoardPage() {
     }
   };
 
+  const handleBranchFilterChange = (branchId: string) => {
+    setSelectedBranchFilter(branchId);
+    setPage(1);
+  };
+
+  const handleLimitChange = (value: string) => {
+    setLimit(Number(value));
+    setPage(1);
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 p-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <Link to="/" className="text-sm text-blue-600 hover:underline">
               ← Back to Dashboard
@@ -82,7 +148,7 @@ export default function QueueBoardPage() {
           </div>
 
           <button
-            onClick={() => fetchAll(false)}
+            onClick={() => fetchQueues(false)}
             disabled={isRefreshing}
             className="rounded-lg bg-slate-800 px-4 py-2 text-white hover:bg-slate-900 disabled:opacity-60"
           >
@@ -97,16 +163,61 @@ export default function QueueBoardPage() {
         )}
 
         <div className="mb-6 grid gap-4 md:grid-cols-5">
-          <StatCard label="Total" value={stats.total ?? queues.length} />
+          <StatCard label="Total" value={stats.total ?? pagination.totalCount ?? queues.length} />
           <StatCard label="Waiting" value={stats.waiting ?? countStatus(queues, "waiting")} />
           <StatCard label="Called" value={stats.called ?? countStatus(queues, "called")} />
           <StatCard label="Serving" value={stats.serving ?? countStatus(queues, "serving")} />
           <StatCard label="Completed" value={stats.completed ?? countStatus(queues, "completed")} />
         </div>
 
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <select
+            value={selectedBranchFilter}
+            onChange={(e) => handleBranchFilterChange(e.target.value)}
+            className="w-[220px] rounded-lg border border-slate-300 bg-white p-2 outline-none focus:border-blue-500"
+          >
+            <option value="">All branches</option>
+            {branches.map((branch) => (
+              <option key={branch.id} value={branch.id}>
+                {branch.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={String(limit)}
+            onChange={(e) => handleLimitChange(e.target.value)}
+            className="w-[140px] rounded-lg border border-slate-300 bg-white p-2 outline-none focus:border-blue-500"
+          >
+            <option value="5">5 / page</option>
+            <option value="10">10 / page</option>
+            <option value="20">20 / page</option>
+          </select>
+
+          <button
+            onClick={() => {
+              setSelectedBranchFilter("");
+              setPage(1);
+              setLimit(5);
+            }}
+            className="rounded-lg bg-slate-700 px-4 py-2 text-white hover:bg-slate-800"
+          >
+            Reset Filters
+          </button>
+
+          {selectedBranchFilter && (
+            <p className="text-sm text-slate-500">
+              Filtering by: {branchMap.get(selectedBranchFilter) || selectedBranchFilter}
+            </p>
+          )}
+        </div>
+
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-6 py-4">
+          <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
             <h2 className="text-xl font-semibold text-slate-900">All Queues</h2>
+            <p className="text-sm text-slate-500">
+              Page {pagination.page} of {pagination.totalPages} • Total {pagination.totalCount}
+            </p>
           </div>
 
           {isLoading ? (
@@ -140,11 +251,11 @@ export default function QueueBoardPage() {
                       </td>
 
                       <td className="px-6 py-4 text-slate-700">
-                        {queue.branch?.name || queue.branchId || "-"}
+                        {branchMap.get(queue.branchId || "") || "-"}
                       </td>
 
                       <td className="px-6 py-4 text-slate-700">
-                        {queue.service?.name || queue.serviceId || "-"}
+                        {serviceMap.get(queue.serviceId || "") || "-"}
                       </td>
 
                       <td className="px-6 py-4">
@@ -175,6 +286,28 @@ export default function QueueBoardPage() {
               </table>
             </div>
           )}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between">
+          <button
+            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+            disabled={!pagination.hasPrev}
+            className="rounded-lg bg-slate-800 px-4 py-2 text-white hover:bg-slate-900 disabled:opacity-50"
+          >
+            Previous
+          </button>
+
+          <div className="text-sm text-slate-500">
+            Current page: {pagination.page}
+          </div>
+
+          <button
+            onClick={() => setPage((prev) => prev + 1)}
+            disabled={!pagination.hasNext}
+            className="rounded-lg bg-slate-800 px-4 py-2 text-white hover:bg-slate-900 disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>

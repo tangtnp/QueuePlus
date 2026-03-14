@@ -1,4 +1,9 @@
-export type QueueStatus = "waiting" | "called" | "serving" | "completed" | "cancelled";
+export type QueueStatus =
+  | "waiting"
+  | "called"
+  | "serving"
+  | "completed"
+  | "cancelled";
 
 export interface QueueItem {
   id: string;
@@ -7,19 +12,8 @@ export interface QueueItem {
   status: QueueStatus | string;
   createdAt?: string;
   updatedAt?: string;
-
   branchId?: string;
   serviceId?: string;
-
-  branch?: {
-    id: string;
-    name: string;
-  };
-
-  service?: {
-    id: string;
-    name: string;
-  };
 }
 
 export interface QueueStats {
@@ -29,4 +23,27 @@ export interface QueueStats {
   serving?: number;
   completed?: number;
   cancelled?: number;
+}
+
+export interface QueuePagination {
+  hasNext: boolean;
+  hasPrev: boolean;
+  limit: number;
+  page: number;
+  totalCount: number;
+  totalPages: number;
+}
+
+export interface QueueFilters {
+  branchId?: string;
+  serviceId?: string;
+  sortBy?: string;
+  sortOrder?: string;
+  status?: string;
+}
+
+export interface QueueListResponse {
+  data: QueueItem[];
+  filters?: QueueFilters;
+  pagination?: QueuePagination;
 }
