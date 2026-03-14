@@ -3,8 +3,10 @@ export type UserRole = "user" | "staff" | "admin";
 export interface AuthUser {
   id: string;
   email: string;
-  fullName?: string;
+  name?: string;
   role: UserRole;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface LoginPayload {

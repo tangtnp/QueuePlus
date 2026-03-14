@@ -14,8 +14,8 @@ export default function ProtectedRoute({
 
   if (isCheckingAuth) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-slate-500">Checking session...</p>
+      <div className="flex min-h-screen items-center justify-center bg-white text-black">
+        Checking session...
       </div>
     );
   }
@@ -24,8 +24,8 @@ export default function ProtectedRoute({
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" replace />;
+  if (allowedRoles && user.role && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;

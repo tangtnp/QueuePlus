@@ -2,6 +2,13 @@ import { create } from "zustand";
 import { api } from "../api/client";
 import type { AuthUser, LoginPayload } from "../types/auth";
 
+const normalizeUser = (payload: any): AuthUser | null => {
+  if (payload?.user) return payload.user;
+  if (payload?.data?.user) return payload.data.user;
+  if (payload?.data) return payload.data;
+  return payload ?? null;
+};
+
 interface AuthState {
   user: AuthUser | null;
   isLoading: boolean;
@@ -28,7 +35,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const response = await api.get("/auth/me");
 
       set({
-        user: response.data?.data ?? response.data ?? null,
+        user: normalizeUser(response.data),
         isLoading: false,
       });
 
@@ -53,7 +60,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const response = await api.get("/auth/me");
 
       set({
-        user: response.data?.data ?? response.data ?? null,
+        user: normalizeUser(response.data),
         isCheckingAuth: false,
       });
     } catch {
