@@ -17,6 +17,7 @@ import (
 
 type CreateQueueInput struct {
 	CustomerName string `json:"customerName"`
+	UserID     string `json:"userId"`
 	BranchID     string `json:"branchId"`
 	ServiceID    string `json:"serviceId"`
 }
@@ -67,36 +68,16 @@ func CreateQueue(c *gin.Context) {
 		return
 	}
 
+	userObjectID, err := primitive.ObjectIDFromHex(input.UserID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid userId",
+		})
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
-	branchCollection := config.DB.Collection("branches")
-	branchCount, err := branchCollection.CountDocuments(ctx, bson.M{"_id": branchObjectID})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "failed to validate branch",
-		})
-		return
-	}
-	if branchCount == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "branch not found",
-		})
-		return
-	}
-
-	serviceCollection := config.DB.Collection("services")
-	var service models.Service
-	err = serviceCollection.FindOne(ctx, bson.M{
-		"_id":      serviceObjectID,
-		"branchId": branchObjectID,
-	}).Decode(&service)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "service not found in this branch",
-		})
-		return
-	}
 
 	queueCollection := config.DB.Collection("queues")
 
@@ -123,6 +104,7 @@ func CreateQueue(c *gin.Context) {
 	queue := models.Queue{
 		QueueNumber:  queueNumber,
 		CustomerName: input.CustomerName,
+		UserID:       userObjectID,
 		BranchID:     branchObjectID,
 		ServiceID:    serviceObjectID,
 		Status:       "waiting",
@@ -394,5 +376,72 @@ func UpdateQueueStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "queue status updated successfully",
 		"status":  input.Status,
+	})
+}
+
+// GetMyQueues godoc
+// @Summary Get my queues
+// @Description Get queues that belong to the currently authenticated customer
+// @Tags Queues
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Router /my/queues [get]
+func GetMyQueues(c *gin.Context) {
+	userIDValue, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "user not found in context",
+		})
+		return
+	}
+
+	userID, ok := userIDValue.(string)
+	if !ok || userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid user id in context",
+		})
+		return
+	}
+
+	uid, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid user id format",
+		})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	collection := config.DB.Collection("queues")
+
+	filter := bson.M{
+		"userId": uid,
+	}
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "failed to fetch queues",
+		})
+		return
+	}
+	defer cursor.Close(ctx)
+
+	var queues []models.Queue
+	if err := cursor.All(ctx, &queues); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "decode error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": queues,
 	})
 }

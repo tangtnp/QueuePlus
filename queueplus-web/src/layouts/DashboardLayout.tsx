@@ -31,9 +31,20 @@ export default function DashboardLayout({
 
                     <div className="p-4">
                         <nav className="space-y-2">
-                            <SidebarLink to="/">Dashboard</SidebarLink>
-                            <SidebarLink to="/queues">Queue Board</SidebarLink>
+                            <SidebarLink to="/profile">My Profile</SidebarLink>
+                            {user?.role === "admin" || user?.role === "staff" && (<>
+                                <SidebarLink to="/">Dashboard</SidebarLink>
+                            </>)}
+                            {user?.role === "user" && (
+                                <>
+                                    <SidebarLink to="/my-queues">My Queues</SidebarLink>
+                                </>
+                            )}
+                            {user?.role === "admin" || user?.role === "staff" && (<>
+                                <SidebarLink to="/queues">Queue Board</SidebarLink>
+                            </>)}
                             
+
 
                             {user?.role === "admin" && (
                                 <>
@@ -41,9 +52,13 @@ export default function DashboardLayout({
                                     <SidebarLink to="/services">Services</SidebarLink>
                                 </>
                             )}
-                            <SidebarLink to="/health">Health Check</SidebarLink>
+                            {user?.role === "admin" || user?.role === "staff" && (<>
+                                <SidebarLink to="/health">Health Check</SidebarLink>
                             <SidebarLink to="/monitor/system">System Monitor</SidebarLink>
                             <SidebarLink to="/monitor/runtime">Runtime Monitor</SidebarLink>
+                            
+                            </>)}
+                            
                         </nav>
 
                         <div className="mt-8 rounded-2xl bg-slate-50 p-4">

@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -37,13 +38,35 @@ func ConnectDB() {
 
 	DB = client.Database(dbName)
 
+	// blacklist token index
 	_, err = DB.Collection("blacklisted_tokens").Indexes().CreateOne(ctx, mongo.IndexModel{
-		Keys: map[string]interface{}{
-			"token": 1,
+		Keys: bson.D{
+			{Key: "token", Value: 1},
 		},
 	})
 	if err != nil {
 		log.Println("warning: failed to create blacklist index:", err)
+	}
+
+	// queues.userId index (for /my/queues)
+	_, err = DB.Collection("queues").Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys: bson.D{
+			{Key: "userId", Value: 1},
+		},
+	})
+	if err != nil {
+		log.Println("warning: failed to create queues.userId index:", err)
+	}
+
+	// queues branch index
+	_, err = DB.Collection("queues").Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys: bson.D{
+			{Key: "branchId", Value: 1},
+			{Key: "createdAt", Value: 1},
+		},
+	})
+	if err != nil {
+		log.Println("warning: failed to create queues branch index:", err)
 	}
 
 	log.Println("connected to MongoDB:", dbName)

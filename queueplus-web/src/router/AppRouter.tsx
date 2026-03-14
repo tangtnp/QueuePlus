@@ -9,6 +9,8 @@ import GuestRoute from "./GuestRoute";
 import HealthPage from "../pages/HealthPage";
 import SystemMonitorPage from "../pages/SystemMonitorPage";
 import RuntimeMonitorPage from "../pages/RuntimeMonitorPage";
+import ProfilePage from "../pages/ProfilePage";
+import MyQueuesPage from "../pages/MyQueuesPage";
 
 export default function AppRouter() {
     return (
@@ -81,6 +83,22 @@ export default function AppRouter() {
                     element={
                         <ProtectedRoute allowedRoles={["staff", "admin"]}>
                             <RuntimeMonitorPage />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/profile"
+                    element={
+                            <ProfilePage />
+                    }
+                />
+
+                <Route
+                    path="/my-queues"
+                    element={
+                        <ProtectedRoute allowedRoles={["user"]}>
+                            <MyQueuesPage />
                         </ProtectedRoute>
                     }
                 />

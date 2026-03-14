@@ -17,6 +17,7 @@ export default function GuestRoute({ children }: GuestRouteProps) {
   }
 
   if (user) {
+    if (user.role === "user") return <Navigate to="/my-queues" replace />;
     return <Navigate to="/" replace />;
   }
 

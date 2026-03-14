@@ -60,11 +60,11 @@ func Register(c *gin.Context) {
 	}
 
 	if input.Role == "" {
-		input.Role = "customer"
+		input.Role = "user"
 	}
 
 	validRoles := map[string]bool{
-		"customer": true,
+		"user": true,
 		"staff":    true,
 		"admin":    true,
 	}
