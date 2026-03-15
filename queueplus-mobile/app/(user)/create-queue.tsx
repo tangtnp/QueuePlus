@@ -14,6 +14,7 @@ import { serviceApi } from "../../src/api/service";
 import { queueApi } from "../../src/api/queue";
 import type { Branch } from "../../src/types/branch";
 import type { ServiceItem } from "../../src/types/service";
+import { router } from "expo-router";
 
 export default function CreateQueuePage() {
   const { user } = useAuthStore();
@@ -30,6 +31,9 @@ export default function CreateQueuePage() {
 
   const [error, setError] = useState<string | null>(null);
 
+  const selectedBranch = branches.find((branch) => branch.id === selectedBranchId);
+  const selectedService = services.find((service) => service.id === selectedServiceId);
+
   const fetchBranches = async () => {
     try {
       setError(null);
@@ -39,8 +43,8 @@ export default function CreateQueuePage() {
     } catch (err: any) {
       setError(
         err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          "Failed to load branches"
+        err?.response?.data?.error ||
+        "Failed to load branches"
       );
     } finally {
       setIsLoading(false);
@@ -56,8 +60,8 @@ export default function CreateQueuePage() {
     } catch (err: any) {
       setError(
         err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          "Failed to load services"
+        err?.response?.data?.error ||
+        "Failed to load services"
       );
       setServices([]);
     } finally {
@@ -110,18 +114,21 @@ export default function CreateQueuePage() {
         response?.data?.queueNumber ||
         response?.queueNumber ||
         response?.data?.data?.queueNumber ||
-        "Created successfully";
+        "Created";
 
-      Alert.alert("Success", `Queue created: ${queueNumber}`);
-
-      setSelectedBranchId("");
-      setSelectedServiceId("");
-      setServices([]);
+      router.replace({
+        pathname: "/(user)/queue-success",
+        params: {
+          queueNumber,
+          branchName: selectedBranch?.name || "-",
+          serviceName: selectedService?.name || "-",
+        },
+      });
     } catch (err: any) {
       setError(
         err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          "Failed to create queue"
+        err?.response?.data?.error ||
+        "Failed to create queue"
       );
     } finally {
       setIsSubmitting(false);

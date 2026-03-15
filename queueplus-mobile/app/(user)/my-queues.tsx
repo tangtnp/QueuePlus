@@ -12,6 +12,7 @@ import { serviceApi } from "../../src/api/service";
 import type { MyQueueItem } from "../../src/types/queue";
 import type { Branch } from "../../src/types/branch";
 import type { ServiceItem } from "../../src/types/service";
+import StatusBadge from "../../components/StatusBadge";
 
 export default function MyQueuesPage() {
   const [queues, setQueues] = useState<MyQueueItem[]>([]);
@@ -53,8 +54,8 @@ export default function MyQueuesPage() {
     } catch (err: any) {
       setError(
         err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          "Failed to load your queues"
+        err?.response?.data?.error ||
+        "Failed to load your queues"
       );
     } finally {
       setIsLoading(false);
@@ -138,7 +139,10 @@ export default function MyQueuesPage() {
               label="Service"
               value={serviceMap.get(queue.serviceId || "") || "-"}
             />
-            <InfoRow label="Status" value={queue.status || "-"} />
+            <View style={{ marginBottom: 6 }}>
+              <Text style={{ color: "#64748b", fontSize: 12 }}>Status</Text>
+              <StatusBadge status={queue.status} />
+            </View>
             <InfoRow
               label="Created"
               value={
