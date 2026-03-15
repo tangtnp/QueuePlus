@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { router } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   Text,
   TextInput,
@@ -14,7 +17,7 @@ import { serviceApi } from "../../src/api/service";
 import { queueApi } from "../../src/api/queue";
 import type { Branch } from "../../src/types/branch";
 import type { ServiceItem } from "../../src/types/service";
-import { router } from "expo-router";
+import GlassCard from "../../components/GlassCard";
 
 export default function CreateQueuePage() {
   const { user } = useAuthStore();
@@ -25,14 +28,28 @@ export default function CreateQueuePage() {
   const [selectedBranchId, setSelectedBranchId] = useState("");
   const [selectedServiceId, setSelectedServiceId] = useState("");
 
+  const [peopleAhead, setPeopleAhead] = useState("");
+  const [avgServiceMinutes, setAvgServiceMinutes] = useState("");
+
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
-  const selectedBranch = branches.find((branch) => branch.id === selectedBranchId);
-  const selectedService = services.find((service) => service.id === selectedServiceId);
+  const safePeopleAhead = Number(peopleAhead) || 0;
+  const safeAvgServiceMinutes = Number(avgServiceMinutes) || 0;
+  const estimatedWaitMinutes = safePeopleAhead * safeAvgServiceMinutes;
+
+  const selectedBranch = useMemo(
+    () => branches.find((branch) => branch.id === selectedBranchId),
+    [branches, selectedBranchId]
+  );
+
+  const selectedService = useMemo(
+    () => services.find((service) => service.id === selectedServiceId),
+    [services, selectedServiceId]
+  );
 
   const fetchBranches = async () => {
     try {
@@ -43,8 +60,8 @@ export default function CreateQueuePage() {
     } catch (err: any) {
       setError(
         err?.response?.data?.message ||
-        err?.response?.data?.error ||
-        "Failed to load branches"
+          err?.response?.data?.error ||
+          "Failed to load branches"
       );
     } finally {
       setIsLoading(false);
@@ -60,8 +77,8 @@ export default function CreateQueuePage() {
     } catch (err: any) {
       setError(
         err?.response?.data?.message ||
-        err?.response?.data?.error ||
-        "Failed to load services"
+          err?.response?.data?.error ||
+          "Failed to load services"
       );
       setServices([]);
     } finally {
@@ -127,8 +144,8 @@ export default function CreateQueuePage() {
     } catch (err: any) {
       setError(
         err?.response?.data?.message ||
-        err?.response?.data?.error ||
-        "Failed to create queue"
+          err?.response?.data?.error ||
+          "Failed to create queue"
       );
     } finally {
       setIsSubmitting(false);
@@ -146,148 +163,203 @@ export default function CreateQueuePage() {
   }
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: "#f8fafc" }}
-      contentContainerStyle={{ padding: 20 }}
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: "#eef4ff" }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <Text style={{ fontSize: 26, fontWeight: "700", marginBottom: 16 }}>
-        Create Queue
-      </Text>
-
-      {!!error && (
-        <View
-          style={{
-            backgroundColor: "#fef2f2",
-            padding: 12,
-            borderRadius: 12,
-            marginBottom: 16,
-          }}
-        >
-          <Text style={{ color: "#dc2626" }}>{error}</Text>
-        </View>
-      )}
-
-      <View
-        style={{
-          backgroundColor: "white",
-          padding: 16,
-          borderRadius: 16,
-          marginBottom: 16,
-        }}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 20 }}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text style={{ fontWeight: "600", marginBottom: 8 }}>Customer Name</Text>
-        <TextInput
-          value={customerName}
-          onChangeText={setCustomerName}
-          placeholder="Enter customer name"
-          style={{
-            borderWidth: 1,
-            borderColor: "#cbd5e1",
-            borderRadius: 12,
-            padding: 12,
-          }}
-        />
-      </View>
+        <Text style={{ fontSize: 26, fontWeight: "700", marginBottom: 16 }}>
+          Create Queue
+        </Text>
 
-      <View
-        style={{
-          backgroundColor: "white",
-          padding: 16,
-          borderRadius: 16,
-          marginBottom: 16,
-        }}
-      >
-        <Text style={{ fontWeight: "600", marginBottom: 12 }}>Select Branch</Text>
+        {!!error && (
+          <GlassCard>
+            <Text style={{ color: "#dc2626", fontWeight: "600" }}>{error}</Text>
+          </GlassCard>
+        )}
 
-        {branches.map((branch) => {
-          const isSelected = selectedBranchId === branch.id;
+        <GlassCard>
+          <Text style={{ fontWeight: "700", marginBottom: 10 }}>
+            Customer Name
+          </Text>
+          <TextInput
+            value={customerName}
+            onChangeText={setCustomerName}
+            placeholder="Enter customer name"
+            style={{
+              borderWidth: 1,
+              borderColor: "#cbd5e1",
+              borderRadius: 12,
+              padding: 12,
+              backgroundColor: "rgba(255,255,255,0.9)",
+            }}
+          />
+        </GlassCard>
 
-          return (
-            <TouchableOpacity
-              key={branch.id}
-              onPress={() => handleSelectBranch(branch.id)}
-              style={{
-                padding: 14,
-                borderRadius: 12,
-                marginBottom: 10,
-                backgroundColor: isSelected ? "#dbeafe" : "#f8fafc",
-                borderWidth: 1,
-                borderColor: isSelected ? "#2563eb" : "#e2e8f0",
-              }}
-            >
-              <Text style={{ fontWeight: "600", color: "#0f172a" }}>
-                {branch.name}
-              </Text>
-              <Text style={{ color: "#64748b", marginTop: 4 }}>
-                {branch.location || "-"}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+        <GlassCard>
+          <Text style={{ fontWeight: "700", marginBottom: 12 }}>
+            Select Branch
+          </Text>
 
-      <View
-        style={{
-          backgroundColor: "white",
-          padding: 16,
-          borderRadius: 16,
-          marginBottom: 16,
-        }}
-      >
-        <Text style={{ fontWeight: "600", marginBottom: 12 }}>Select Service</Text>
-
-        {isLoadingServices ? (
-          <ActivityIndicator />
-        ) : selectedBranchId === "" ? (
-          <Text style={{ color: "#64748b" }}>Please select a branch first</Text>
-        ) : services.length === 0 ? (
-          <Text style={{ color: "#64748b" }}>No services found</Text>
-        ) : (
-          services.map((service) => {
-            const isSelected = selectedServiceId === service.id;
+          {branches.map((branch) => {
+            const isSelected = selectedBranchId === branch.id;
 
             return (
               <TouchableOpacity
-                key={service.id}
-                onPress={() => setSelectedServiceId(service.id)}
+                key={branch.id}
+                onPress={() => handleSelectBranch(branch.id)}
                 style={{
                   padding: 14,
                   borderRadius: 12,
                   marginBottom: 10,
-                  backgroundColor: isSelected ? "#dcfce7" : "#f8fafc",
+                  backgroundColor: isSelected ? "#dbeafe" : "#f8fafc",
                   borderWidth: 1,
-                  borderColor: isSelected ? "#16a34a" : "#e2e8f0",
+                  borderColor: isSelected ? "#2563eb" : "#e2e8f0",
                 }}
               >
                 <Text style={{ fontWeight: "600", color: "#0f172a" }}>
-                  {service.name}
+                  {branch.name}
                 </Text>
                 <Text style={{ color: "#64748b", marginTop: 4 }}>
-                  {service.description || "-"}
+                  {branch.location || "-"}
                 </Text>
               </TouchableOpacity>
             );
-          })
-        )}
-      </View>
+          })}
+        </GlassCard>
 
-      <TouchableOpacity
-        onPress={handleCreateQueue}
-        disabled={isSubmitting}
-        style={{
-          backgroundColor: "#2563eb",
-          padding: 16,
-          borderRadius: 12,
-          alignItems: "center",
-          opacity: isSubmitting ? 0.6 : 1,
-        }}
-      >
-        {isSubmitting ? (
-          <ActivityIndicator color="white" />
-        ) : (
-          <Text style={{ color: "white", fontWeight: "700" }}>Create Queue</Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+        <GlassCard>
+          <Text style={{ fontWeight: "700", marginBottom: 12 }}>
+            Select Service
+          </Text>
+
+          {isLoadingServices ? (
+            <ActivityIndicator />
+          ) : selectedBranchId === "" ? (
+            <Text style={{ color: "#64748b" }}>Please select a branch first</Text>
+          ) : services.length === 0 ? (
+            <Text style={{ color: "#64748b" }}>No services found</Text>
+          ) : (
+            services.map((service) => {
+              const isSelected = selectedServiceId === service.id;
+
+              return (
+                <TouchableOpacity
+                  key={service.id}
+                  onPress={() => setSelectedServiceId(service.id)}
+                  style={{
+                    padding: 14,
+                    borderRadius: 12,
+                    marginBottom: 10,
+                    backgroundColor: isSelected ? "#dcfce7" : "#f8fafc",
+                    borderWidth: 1,
+                    borderColor: isSelected ? "#16a34a" : "#e2e8f0",
+                  }}
+                >
+                  <Text style={{ fontWeight: "600", color: "#0f172a" }}>
+                    {service.name}
+                  </Text>
+                  <Text style={{ color: "#64748b", marginTop: 4 }}>
+                    {service.description || "-"}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })
+          )}
+        </GlassCard>
+
+        <GlassCard>
+          <Text style={{ fontSize: 18, fontWeight: "700", marginBottom: 10 }}>
+            Queue ETA Calculator
+          </Text>
+          <Text style={{ color: "#64748b", marginBottom: 14 }}>
+            Mock calculation for estimated waiting time
+          </Text>
+
+          <Text style={{ fontWeight: "600", marginBottom: 8 }}>
+            People Ahead
+          </Text>
+          <TextInput
+            value={peopleAhead}
+            onChangeText={setPeopleAhead}
+            placeholder="e.g. 3"
+            keyboardType="numeric"
+            style={{
+              borderWidth: 1,
+              borderColor: "#cbd5e1",
+              borderRadius: 12,
+              padding: 12,
+              marginBottom: 12,
+              backgroundColor: "rgba(255,255,255,0.9)",
+            }}
+          />
+
+          <Text style={{ fontWeight: "600", marginBottom: 8 }}>
+            Average Service Time (minutes)
+          </Text>
+          <TextInput
+            value={avgServiceMinutes}
+            onChangeText={setAvgServiceMinutes}
+            placeholder="e.g. 5"
+            keyboardType="numeric"
+            style={{
+              borderWidth: 1,
+              borderColor: "#cbd5e1",
+              borderRadius: 12,
+              padding: 12,
+              marginBottom: 16,
+              backgroundColor: "rgba(255,255,255,0.9)",
+            }}
+          />
+
+          <View
+            style={{
+              backgroundColor: "#eff6ff",
+              borderRadius: 14,
+              padding: 14,
+              borderWidth: 1,
+              borderColor: "#bfdbfe",
+            }}
+          >
+            <Text style={{ color: "#1e3a8a", fontWeight: "700" }}>
+              Estimated Wait Time
+            </Text>
+            <Text
+              style={{
+                marginTop: 6,
+                fontSize: 24,
+                fontWeight: "700",
+                color: "#2563eb",
+              }}
+            >
+              {estimatedWaitMinutes} min
+            </Text>
+          </View>
+        </GlassCard>
+
+        <TouchableOpacity
+          onPress={handleCreateQueue}
+          disabled={isSubmitting}
+          style={{
+            backgroundColor: "#2563eb",
+            padding: 16,
+            borderRadius: 12,
+            alignItems: "center",
+            opacity: isSubmitting ? 0.6 : 1,
+            marginBottom: 30,
+          }}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={{ color: "white", fontWeight: "700" }}>Create Queue</Text>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
