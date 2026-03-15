@@ -1,8 +1,12 @@
+/* index.css */
 @import "tailwindcss";
+
+/* Tell Tailwind v4 to use the .dark class for dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
 
 body {
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
-  background: #f8fafc;
-  color: #0f172a;
+  /* Use Tailwind utilities so it switches smoothly with your theme */
+  @apply bg-slate-100 text-slate-900 dark:bg-slate-900 dark:text-slate-100;
 }

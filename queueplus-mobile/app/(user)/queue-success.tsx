@@ -6,7 +6,10 @@ export default function QueueSuccessPage() {
     queueNumber?: string;
     branchName?: string;
     serviceName?: string;
+    mode?: string;
   }>();
+
+  const isOffline = params.mode === "offline";
 
   return (
     <View
@@ -32,11 +35,13 @@ export default function QueueSuccessPage() {
             marginBottom: 8,
           }}
         >
-          Queue Created
+          {isOffline ? "Queue Saved Offline" : "Queue Created"}
         </Text>
 
         <Text style={{ color: "#64748b", marginBottom: 20 }}>
-          Your queue has been created successfully.
+          {isOffline
+            ? "Your queue has been saved locally and will sync automatically when internet is available."
+            : "Your queue has been created successfully."}
         </Text>
 
         <InfoRow label="Queue Number" value={params.queueNumber || "-"} />

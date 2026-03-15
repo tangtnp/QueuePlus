@@ -12,15 +12,19 @@ import {
   View,
 } from "react-native";
 import { useAuthStore } from "../../src/store/authStore";
+import { useNetworkStore } from "../../src/store/networkStore";
 import { branchApi } from "../../src/api/branch";
 import { serviceApi } from "../../src/api/service";
 import { queueApi } from "../../src/api/queue";
 import type { Branch } from "../../src/types/branch";
 import type { ServiceItem } from "../../src/types/service";
 import GlassCard from "../../components/GlassCard";
+import NetworkBanner from "../../components/NetworkBanner";
+import { enqueueOfflineQueue } from "../../src/utils/offlineQueue";
 
 export default function CreateQueuePage() {
   const { user } = useAuthStore();
+  const { isOnline } = useNetworkStore();
 
   const [customerName, setCustomerName] = useState(user?.name || "");
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -120,6 +124,26 @@ export default function CreateQueuePage() {
       setError(null);
       setIsSubmitting(true);
 
+      if (!isOnline) {
+        const pendingItem = await enqueueOfflineQueue({
+          customerName: customerName.trim(),
+          userId: user.id,
+          branchId: selectedBranchId,
+          serviceId: selectedServiceId,
+        });
+
+        router.replace({
+          pathname: "/(user)/queue-success",
+          params: {
+            queueNumber: pendingItem.localId.slice(-6).toUpperCase(),
+            branchName: selectedBranch?.name || "-",
+            serviceName: selectedService?.name || "-",
+            mode: "offline",
+          },
+        });
+        return;
+      }
+
       const response = await queueApi.createQueue({
         customerName: customerName.trim(),
         userId: user.id,
@@ -139,6 +163,7 @@ export default function CreateQueuePage() {
           queueNumber,
           branchName: selectedBranch?.name || "-",
           serviceName: selectedService?.name || "-",
+          mode: "online",
         },
       });
     } catch (err: any) {
@@ -175,6 +200,8 @@ export default function CreateQueuePage() {
         <Text style={{ fontSize: 26, fontWeight: "700", marginBottom: 16 }}>
           Create Queue
         </Text>
+
+        <NetworkBanner />
 
         {!!error && (
           <GlassCard>

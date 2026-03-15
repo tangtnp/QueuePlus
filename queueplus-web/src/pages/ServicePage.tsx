@@ -206,7 +206,7 @@ export default function ServicePage() {
   const handleSearchByTags = async () => {
     const tags = searchInput
       .split(",")
-      .map((tag) => tag.trim())
+      .map((tag) => tag.trim().toLowerCase())
       .filter(Boolean);
   
     if (tags.length === 0) {

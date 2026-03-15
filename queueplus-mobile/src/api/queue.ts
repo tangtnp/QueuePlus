@@ -8,10 +8,22 @@ const normalizeQueueList = (payload: any): MyQueueItem[] => {
   return [];
 };
 
+const normalizeQueue = (payload: any): MyQueueItem | null => {
+  if (payload?.queue) return payload.queue;
+  if (payload?.data?.queue) return payload.data.queue;
+  if (payload?.data && !Array.isArray(payload.data)) return payload.data;
+  return payload ?? null;
+};
+
 export const queueApi = {
   async getMyQueues(): Promise<MyQueueItem[]> {
     const response = await api.get("/my/queues");
     return normalizeQueueList(response.data);
+  },
+
+  async getQueueById(id: string): Promise<MyQueueItem | null> {
+    const response = await api.get(`/queues/${id}`);
+    return normalizeQueue(response.data);
   },
 
   async createQueue(payload: CreateQueuePayload) {
